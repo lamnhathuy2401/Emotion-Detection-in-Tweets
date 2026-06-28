@@ -1,0 +1,444 @@
+% DS 423 - Group 22 - Project Report
+% Duy Tan University, Da Nang
+% IMPORTANT: Compile with XeLaTeX (Overleaf: Menu > Compiler > XeLaTeX)
+\documentclass[12pt]{article}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{setspace}
+\onehalfspacing
+
+\title{Emotion Detection in Tweets}
+\author{Group 22 -- NLP}
+\date{June 2026}
+
+\begin{document}
+
+% ---------------- TITLE PAGE ----------------
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\Large \textbf{DUY TAN UNIVERSITY}}\\[0.3cm]
+{\large Da Nang}\\[1.5cm]
+{\large DS 423 -- Machine Learning with Large Datasets}\\[2.5cm]
+{\huge \textbf{Emotion Detection in Tweets}}\\[1cm]
+{\large \textbf{Group 22 -- NLP}}\\[1.5cm]
+\begin{tabular}{ll}
+\textbf{Member} & \textbf{Student ID} \\
+\hline
+Lâm Nhật Huy & 29211465364 \\
+Nguyễn Thị Lam Giang & 29201458314 \\
+\end{tabular}
+\vfill
+{\large June 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ---------------- ABSTRACT ----------------
+\begin{abstract}
+Social-media platforms generate vast volumes of short text that reflect how people feel about products, events, and public issues.
+This project addresses the need to automatically detect emotions---such as joy, anger, sadness, fear, love, and surprise---from short social-media text.
+Such capability could support applications such as brand monitoring and public-opinion analysis; however, our implementation is an offline notebook-based classifier rather than a deployed real-time system.
+We built a multi-class text classifier using the \textit{Emotion} dataset from Hugging Face, applying text cleaning, TF-IDF feature extraction, and Logistic Regression with hyperparameter tuning via stratified cross-validation.
+On the held-out test set of 2{,}000 tweets, the best model achieved \textbf{90.25\% accuracy} and a \textbf{weighted F1-score of 0.9043}, substantially outperforming a majority-class baseline (34.75\% accuracy).
+The strongest performance was observed for \textit{sadness} and \textit{joy}, while semantically similar or minority classes such as \textit{love} and \textit{surprise} were more challenging.
+\end{abstract}
+
+% ---------------- SECTIONS ----------------
+\section{Introduction and Problem Statement}
+
+Brands, governments, and researchers increasingly monitor public emotion on social media to understand audience reactions, detect crises early, and measure campaign effectiveness.
+Unlike coarse sentiment analysis (positive/negative), \textbf{emotion detection} assigns fine-grained labels such as joy, anger, sadness, fear, love, and surprise to each post.
+In practice, such systems could be integrated into monitoring dashboards; our project focuses on building and evaluating the core classification pipeline in a Jupyter notebook.
+
+Following the project requirement, this work builds a complete multi-class classifier that labels each input text with one emotion category and evaluates the model using accuracy, precision, recall, F1-score, and a confusion matrix.
+
+The practical challenge is that tweets are short, informal, and noisy: they contain slang, misspellings, URLs, mentions, and hashtags.
+A reliable automated system must preprocess this text, learn discriminative patterns, and generalize to unseen posts.
+
+\textbf{Objective.} Build a complete, runnable pipeline that:
+\begin{itemize}
+    \item loads and explores the dair-ai Emotion dataset;
+    \item preprocesses raw tweet text;
+    \item trains a supervised multi-class classifier with hyperparameter tuning;
+    \item evaluates performance using accuracy, precision, recall, F1-score, and a confusion matrix.
+\end{itemize}
+
+\section{Dataset}
+
+\subsection{Source and Splits}
+
+We used the \textbf{Emotion Dataset (dair-ai)} hosted on Hugging Face (\url{https://huggingface.co/datasets/dair-ai/emotion}).
+The dataset contains English tweets labeled with one of six emotions.
+It is split into training, validation, and test sets as shown in Table~\ref{tab:splits}.
+
+\begin{table}[H]
+\centering
+\caption{Dataset splits}
+\label{tab:splits}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Split} & \textbf{Samples} & \textbf{Purpose} \\
+\midrule
+Train & 16{,}000 & Model training and cross-validation \\
+Validation & 2{,}000 & Development / sanity check \\
+Test & 2{,}000 & Final evaluation (held out) \\
+\midrule
+\textbf{Total} & \textbf{20{,}000} & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Features and Labels}
+
+Each record has two fields:
+\begin{itemize}
+    \item \texttt{text}: the raw tweet (string);
+    \item \texttt{label}: integer class ID mapped to one of six emotions---\textit{sadness} (0), \textit{joy} (1), \textit{love} (2), \textit{anger} (3), \textit{fear} (4), \textit{surprise} (5).
+\end{itemize}
+
+\subsection{Exploratory Analysis}
+
+Basic statistics on the training set (Table~\ref{tab:eda}) show no missing values and only 31 duplicate texts out of 16{,}000 samples.
+The average tweet length is approximately 19 words (96 characters), with a maximum of 66 words.
+
+\begin{table}[H]
+\centering
+\caption{Training set descriptive statistics}
+\label{tab:eda}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Statistic} & \textbf{Label} & \textbf{Char.\ length} & \textbf{Word count} \\
+\midrule
+Mean & 1.57 & 96.85 & 19.17 \\
+Std.\ dev. & 1.50 & 55.90 & 10.99 \\
+Min & 0 & 7 & 1 \\
+Max & 5 & 300 & 66 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The class distribution is \textbf{imbalanced}: \textit{joy} and \textit{sadness} dominate, while \textit{surprise} is the smallest class (Table~\ref{tab:classdist}).
+Figure~\ref{fig:eda} illustrates the class distribution and word-count histogram.
+
+\begin{table}[H]
+\centering
+\caption{Training set class distribution}
+\label{tab:classdist}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Emotion} & \textbf{Count} & \textbf{Percentage} \\
+\midrule
+Joy & 5{,}362 & 33.5\% \\
+Sadness & 4{,}666 & 29.2\% \\
+Anger & 2{,}159 & 13.5\% \\
+Fear & 1{,}937 & 12.1\% \\
+Love & 1{,}304 & 8.2\% \\
+Surprise & 572 & 3.6\% \\
+\midrule
+\textbf{Total} & \textbf{16{,}000} & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{outputs/eda_overview.png}
+\caption{Exploratory data analysis on the training set: emotion class distribution (left) and word-count distribution (right).}
+\label{fig:eda}
+\end{figure}
+
+\section{Methodology}
+
+Our approach follows a standard supervised text-classification pipeline.
+Each design choice below is motivated by properties of short, noisy social-media text.
+
+\subsection{Text Preprocessing}
+
+For each tweet we applied the following steps:
+\begin{enumerate}
+    \item \textbf{Lowercasing} --- normalizes tokens so that ``Happy'' and ``happy'' are treated as the same feature.
+    \item \textbf{Remove URLs and mentions} --- URLs and \texttt{@user} tags carry little emotional signal and add sparse noise; removing them helps the model focus on lexical content.
+    \item \textbf{Keep hashtag words, remove the \# symbol} --- hashtags often encode topic or sentiment (e.g., \texttt{\#excited} $\rightarrow$ ``excited''), so the word itself may still be informative.
+    \item \textbf{Remove non-alphabetic characters} --- punctuation and digits are inconsistent across tweets and rarely help distinguish emotions in this dataset.
+    \item \textbf{Stopword removal} --- filters high-frequency function words (e.g., ``the'', ``is'') that contribute little to class separation in bag-of-words models.
+    \item \textbf{Lemmatization} --- reduces inflected forms (``feeling'', ``felt'') to a common base, shrinking the vocabulary and improving generalization.
+\end{enumerate}
+
+\textbf{Limitation.} One risk of standard stopword removal is that negation words such as ``not'', ``no'', and ``never'' may be removed depending on the stopword list or preprocessing configuration.
+Therefore, future versions should explicitly preserve negation terms during preprocessing, or use context-aware models that encode polarity.
+
+\subsection{Feature Engineering}
+
+Cleaned text was vectorized using \textbf{TF-IDF} (Term Frequency--Inverse Document Frequency).
+TF-IDF down-weights common words while emphasizing terms that are frequent in a tweet but rare across the corpus---a standard and efficient representation for large text datasets.
+We used:
+\begin{itemize}
+    \item \texttt{max\_features} = 10{,}000 --- limits memory use while retaining the most informative terms;
+    \item \texttt{ngram\_range} = (1, 2) --- captures both single words and short phrases (e.g., ``feel sad'');
+    \item \texttt{min\_df} = 2 --- ignores very rare terms that may not generalize;
+    \item \texttt{sublinear\_tf} = True --- dampens the effect of very frequent words within a document.
+\end{itemize}
+
+This produced a sparse matrix of shape $(16{,}000 \times 10{,}000)$ for the training set.
+
+\subsection{Model Selection and Hyperparameter Tuning}
+
+We compared several baselines on the same preprocessed data (Table~\ref{tab:baselines}).
+A \textbf{majority-class baseline} (always predicting \textit{joy}, the largest class) achieves only 34.75\% accuracy, establishing a lower bound.
+Among learned models, \textbf{Logistic Regression} offered the best balance of performance, training speed, and interpretability for high-dimensional sparse TF-IDF features.
+
+Hyperparameters for Logistic Regression were tuned with \texttt{GridSearchCV} using 3-fold \textbf{stratified} cross-validation on the training set, optimizing weighted F1-score.
+The search space was:
+\begin{itemize}
+    \item regularization strength $C \in \{0.1,\, 1.0,\, 5.0\}$;
+    \item \texttt{class\_weight} $\in \{\text{None},\, \text{balanced}\}$ --- \texttt{balanced} adjusts for class imbalance by penalizing errors on minority classes more heavily.
+\end{itemize}
+
+\textbf{Best configuration:} $C = 5.0$, \texttt{class\_weight = balanced}, with cross-validated weighted F1 = \textbf{0.9009}.
+
+\section{Implementation}
+
+The complete solution is implemented in the Jupyter notebook \texttt{emotion\_detection.ipynb} (executed version: \texttt{emotion\_detection (result).ipynb}).
+In the notebook, Section~7 compares baseline models (majority class, Naive Bayes, Linear SVM), while Section~8 tunes and selects Logistic Regression as the final classifier.
+
+\subsection{Project Structure}
+
+\begin{verbatim}
+doan/
+|-- emotion_detection.ipynb       # Main notebook
+|-- emotion_detection (result).ipynb
+|-- requirements.txt              # Python dependencies
+|-- README.md
+|-- outputs/                      # Saved figures and reports
+|-- report.tex                    # This report
+\end{verbatim}
+
+\subsection{Key Libraries}
+
+\begin{itemize}
+    \item \textbf{Hugging Face Datasets} --- load the Emotion dataset;
+    \item \textbf{NLTK} --- stopword removal and lemmatization;
+    \item \textbf{scikit-learn} --- TF-IDF, Logistic Regression, GridSearchCV, metrics;
+    \item \textbf{matplotlib / seaborn} --- EDA and result visualizations.
+\end{itemize}
+
+\subsection{Repository Link}
+
+% TODO: Replace with your actual GitHub or Google Drive link before submission.
+\textbf{Code repository:} \url{https://github.com/YOUR_USERNAME/emotion-detection-tweets}
+
+\section{Results and Evaluation}
+
+\subsection{Validation Set}
+
+On the validation set (2{,}000 samples), the tuned model achieved:
+\begin{itemize}
+    \item Accuracy: 90.70\%
+    \item Precision (weighted): 0.9098
+    \item Recall (weighted): 0.9070
+    \item F1-score (weighted): 0.9078
+\end{itemize}
+
+\subsection{Test Set --- Model Comparison}
+
+To contextualize the final result, Table~\ref{tab:baselines} compares our tuned Logistic Regression model against simpler baselines on the same test set and preprocessing pipeline.
+
+\begin{table}[H]
+\centering
+\caption{Model comparison on the test set}
+\label{tab:baselines}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Model} & \textbf{Accuracy} & \textbf{Weighted F1} \\
+\midrule
+Majority Class (always predict \textit{joy}) & 34.75\% & 0.1792 \\
+TF-IDF + Multinomial Naive Bayes & 77.00\% & 0.7345 \\
+TF-IDF + Linear SVM & 90.05\% & 0.9019 \\
+\textbf{TF-IDF + Logistic Regression (tuned)} & \textbf{90.25\%} & \textbf{0.9043} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The tuned Logistic Regression model improves accuracy by \textbf{55.5 percentage points} over the majority-class baseline and slightly outperforms Linear SVM and Naive Bayes, confirming that the result is well above a trivial solution.
+
+\subsection{Test Set --- Overall Metrics}
+
+Table~\ref{tab:overall} reports the detailed metrics for the selected Logistic Regression model on the held-out test set.
+
+\begin{table}[H]
+\centering
+\caption{Overall test-set metrics (weighted average)}
+\label{tab:overall}
+\begin{tabular}{lc}
+\toprule
+\textbf{Metric} & \textbf{Score} \\
+\midrule
+Accuracy & 90.25\% \\
+Precision & 0.9091 \\
+Recall & 0.9025 \\
+F1-score & 0.9043 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Per-Class Performance}
+
+Table~\ref{tab:perclass} shows precision, recall, and F1-score for each emotion class.
+Classes with more training examples (\textit{sadness}, \textit{joy}) achieved F1-scores above 0.92.
+\textit{Love} had lower precision (0.7268) due to confusion with \textit{joy}, while \textit{surprise}---the smallest class---had lower precision (0.6905) but relatively high recall (0.8788).
+
+\begin{table}[H]
+\centering
+\caption{Per-class classification report on the test set}
+\label{tab:perclass}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Emotion} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-score} & \textbf{Support} \\
+\midrule
+Sadness & 0.9520 & 0.9225 & 0.9371 & 581 \\
+Joy & 0.9514 & 0.9022 & 0.9261 & 695 \\
+Love & 0.7268 & 0.8868 & 0.7989 & 159 \\
+Anger & 0.8694 & 0.9200 & 0.8940 & 275 \\
+Fear & 0.9091 & 0.8482 & 0.8776 & 224 \\
+Surprise & 0.6905 & 0.8788 & 0.7733 & 66 \\
+\midrule
+Macro avg & 0.8499 & 0.8931 & 0.8678 & 2{,}000 \\
+Weighted avg & 0.9091 & 0.9025 & 0.9043 & 2{,}000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Confusion Matrix and Visualizations}
+
+Figure~\ref{fig:cm} shows the confusion matrix on the test set.
+The largest off-diagonal errors involve emotionally adjacent classes.
+Specifically, \textbf{46} \textit{joy} tweets were misclassified as \textit{love}, and \textbf{15} \textit{love} tweets were misclassified as \textit{joy}---the most frequent confusion pair overall.
+Other notable errors include \textbf{22} \textit{sadness} $\rightarrow$ \textit{anger}, \textbf{14} \textit{fear} $\rightarrow$ \textit{surprise}, and \textbf{12} \textit{anger} $\rightarrow$ \textit{sadness}.
+These patterns align with overlapping vocabulary (e.g., affectionate language shared by \textit{joy} and \textit{love}) and the difficulty of distinguishing intensity or valence in very short texts.
+Figure~\ref{fig:f1} summarizes per-class F1-scores.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{outputs/confusion_matrix.png}
+\caption{Confusion matrix on the test set (2{,}000 tweets).}
+\label{fig:cm}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{outputs/f1_per_class.png}
+\caption{F1-score per emotion class on the test set.}
+\label{fig:f1}
+\end{figure}
+
+\subsection{Error Analysis}
+
+Table~\ref{tab:errors} presents representative misclassified examples drawn from the test set.
+Most errors stem from semantic overlap between classes, mixed emotions within a single tweet, or ambiguous wording that human annotators and the model may interpret differently.
+
+\begin{table}[H]
+\centering
+\caption{Representative misclassification examples}
+\label{tab:errors}
+\small
+\begin{tabular}{p{1.6cm}p{1.8cm}p{5.8cm}p{3.2cm}}
+\toprule
+\textbf{True Label} & \textbf{Predicted} & \textbf{Example (abridged)} & \textbf{Possible Reason} \\
+\midrule
+Joy & Love & ``I feel like I am in paradise kissing those sweet lips\ldots'' & Affectionate vocabulary overlaps with \textit{love}. \\
+Love & Joy & ``I'm feeling generous today here's one more\ldots'' & Positive, light-hearted tone resembles \textit{joy}. \\
+Sadness & Love & ``I'm not sure the feeling of loss will ever go away but it may dull to a sweet feeling of nostalgia\ldots'' & ``Sweet'' and nostalgic wording blurs sadness and love. \\
+Fear & Joy & ``I was feeling pretty anxious all day but my first day at work was a very good day\ldots'' & Mixed emotions: anxiety followed by relief/positivity. \\
+Surprise & Fear & ``I was so uncomfortable and feeling weird feelings but wasn't sure if they were contractions\ldots'' & Uncertainty and discomfort resemble \textit{fear}. \\
+Anger & Fear & ``I feel my heart is tortured by what I have done'' & Intense negative emotion; vocabulary is ambiguous between anger and fear. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These cases illustrate that fine-grained emotion boundaries are inherently fuzzy in short, context-poor social-media text---a key motivation for future context-aware models.
+
+\section{Individual Contribution}
+
+\begin{table}[H]
+\centering
+\caption{Individual contribution breakdown}
+\label{tab:contrib}
+\begin{tabular}{llc}
+\toprule
+\textbf{Member} & \textbf{Responsibilities} & \textbf{\%} \\
+\midrule
+Lâm Nhật Huy & Data collection \& loading; data cleaning \& preprocessing; EDA with charts; feature engineering; literature review and APA reference formatting & 50\% \\
+Nguyễn Thị Lam Giang & Model selection \& building; training \& hyperparameter tuning; evaluation metrics \& result charts; PowerPoint presentation; LaTeX report \& conclusion & 50\% \\
+\midrule
+\textbf{Total} & Both members: integration, testing, and peer review & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Conclusion and Future Work}
+
+\subsection{Summary}
+
+We successfully built an end-to-end emotion detection pipeline for tweets.
+After preprocessing and TF-IDF vectorization, a tuned Logistic Regression classifier achieved \textbf{90.25\% accuracy} and a \textbf{weighted F1-score of 0.9043} on the test set, meeting the project requirements for multi-class classification with full metric reporting.
+
+\subsection{Key Findings}
+
+\begin{itemize}
+    \item The tuned model (\textbf{90.25\%} accuracy) far exceeds a majority-class baseline (\textbf{34.75\%}), demonstrating meaningful learning rather than class-frequency effects alone.
+    \item TF-IDF with unigrams and bigrams captures sufficient signal for six-way emotion classification on this dataset, though it cannot fully resolve context-dependent cases.
+    \item Class imbalance affects minority classes; \texttt{class\_weight=balanced} and $C=5.0$ improved overall F1 during cross-validation.
+    \item The dominant confusion is \textit{joy} $\leftrightarrow$ \textit{love} (46 + 15 errors), reflecting semantically adjacent positive emotions.
+    \item Standard stopword removal is a practical simplification but may miss nuanced polarity; preserving negation terms is an important preprocessing consideration.
+\end{itemize}
+
+\subsection{Future Work}
+
+Each proposed improvement directly addresses a limitation observed in this project:
+
+\begin{enumerate}
+    \item \textbf{Fine-tune a transformer (e.g.\ DistilBERT).}
+    Because TF-IDF treats words independently and cannot model context or negation reliably, a pretrained language model could better capture semantics (e.g., distinguishing ``not happy'' from ``happy'').
+    \item \textbf{Oversampling or data augmentation for minority classes.}
+    Since \textit{surprise} accounts for only 3.6\% of training data, targeted augmentation could reduce the precision/recall gap seen for rare classes.
+    \item \textbf{Deploy as a REST API.}
+    The current solution is notebook-based and offline; packaging the trained pipeline as an API would be the next step toward practical integration into monitoring tools.
+    \item \textbf{Evaluate on newer Twitter/X data.}
+    The benchmark dataset may not reflect current language use; testing on freshly collected posts would reveal whether the model generalizes beyond the benchmark.
+\end{enumerate}
+
+% ---------------- REFERENCES (APA) ----------------
+\begin{thebibliography}{9}
+
+\bibitem{bird2009}
+Bird, S., Klein, E., \& Loper, E. (2009).
+\textit{Natural language processing with Python: Analyzing text with the Natural Language Toolkit}.
+O'Reilly Media.
+
+\bibitem{dairai2020}
+dair-ai. (2020). \textit{Emotion dataset} [Data set]. Hugging Face.
+\url{https://huggingface.co/datasets/dair-ai/emotion}
+
+\bibitem{pedregosa2011}
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M., \& Duchesnay, \'E. (2011).
+Scikit-learn: Machine learning in Python.
+\textit{Journal of Machine Learning Research}, \textit{12}, 2825--2830.
+
+\bibitem{saravia2018}
+Saravia, E., Liu, H.-C., Huang, Y.-H., Wu, J., \& Chen, Y.-S. (2018).
+CARER: Contextualized affect representations for emotion recognition.
+In \textit{Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing} (pp.\ 3687--3697).
+Association for Computational Linguistics.
+\url{https://doi.org/10.18653/v1/D18-1404}
+
+\end{thebibliography}
+
+\end{document}
