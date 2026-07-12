@@ -130,13 +130,10 @@ The system utilizes a deliberate, supervised machine learning architecture to st
 doan/
 │
 ├── emotion_detection.ipynb        # Main notebook (Pipeline & Training)
-├── emotion_detection_(result).ipynb # Executed version with results
 ├── requirements.txt               # Python dependencies
 ├── README.md                      # Project documentation
 │
 ├── outputs/                       # Saved figures and reports
-│   ├── confusion_matrix.png
-│   └── class_distribution.png
 │
 └── report.tex                     # LaTeX source for the project report
 ```
