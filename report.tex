@@ -31,8 +31,8 @@
 \begin{tabular}{ll}
 \textbf{Member} & \textbf{Student ID} \\
 \hline
-Lâm Nhật Huy & 29211465364 \\
-Nguyễn Thị Lam Giang & 29201458314 \\
+Lam Nhat Huy & 29211465364 \\
+Nguyen Thi Lam Giang & 29201458314 \\
 \end{tabular}
 \vfill
 {\large June 2026}
@@ -214,7 +214,6 @@ In the notebook, Section~7 compares baseline models (majority class, Naive Bayes
 \begin{verbatim}
 doan/
 |-- emotion_detection.ipynb       # Main notebook
-|-- emotion_detection (result).ipynb
 |-- requirements.txt              # Python dependencies
 |-- README.md
 |-- outputs/                      # Saved figures and reports
@@ -233,7 +232,7 @@ doan/
 \subsection{Repository Link}
 
 % TODO: Replace with your actual GitHub or Google Drive link before submission.
-\textbf{Code repository:} \url{https://github.com/YOUR_USERNAME/emotion-detection-tweets}
+\textbf{Code repository:} \url{https://github.com/lamnhathuy2401/Emotion-Detection-in-Tweets}
 
 \section{Results and Evaluation}
 
@@ -320,7 +319,7 @@ Weighted avg & 0.9091 & 0.9025 & 0.9043 & 2{,}000 \\
 
 Figure~\ref{fig:cm} shows the confusion matrix on the test set.
 The largest off-diagonal errors involve emotionally adjacent classes.
-Specifically, \textbf{46} \textit{joy} tweets were misclassified as \textit{love}, and \textbf{15} \textit{love} tweets were misclassified as \textit{joy}---the most frequent confusion pair overall.
+Specifically, \textbf{46} \textit{joy} tweets were misclassified as \textit{love}, and \textbf{14} \textit{love} tweets were misclassified as \textit{joy}---the most frequent confusion pair overall.
 Other notable errors include \textbf{22} \textit{sadness} $\rightarrow$ \textit{anger}, \textbf{14} \textit{fear} $\rightarrow$ \textit{surprise}, and \textbf{12} \textit{anger} $\rightarrow$ \textit{sadness}.
 These patterns align with overlapping vocabulary (e.g., affectionate language shared by \textit{joy} and \textit{love}) and the difficulty of distinguishing intensity or valence in very short texts.
 Figure~\ref{fig:f1} summarizes per-class F1-scores.
@@ -351,7 +350,7 @@ Most errors stem from semantic overlap between classes, mixed emotions within a 
 \small
 \begin{tabular}{p{1.6cm}p{1.8cm}p{5.8cm}p{3.2cm}}
 \toprule
-\textbf{True Label} & \textbf{Predicted} & \textbf{Example (abridged)} & \textbf{Possible Reason} \\
+\textbf{Label} & \textbf{Predicted} & \textbf{Example (abridged)} & \textbf{Possible Reason} \\
 \midrule
 Joy & Love & ``I feel like I am in paradise kissing those sweet lips\ldots'' & Affectionate vocabulary overlaps with \textit{love}. \\
 Love & Joy & ``I'm feeling generous today here's one more\ldots'' & Positive, light-hearted tone resembles \textit{joy}. \\
@@ -375,8 +374,8 @@ These cases illustrate that fine-grained emotion boundaries are inherently fuzzy
 \toprule
 \textbf{Member} & \textbf{Responsibilities} & \textbf{\%} \\
 \midrule
-Lâm Nhật Huy & Data collection \& loading; data cleaning \& preprocessing; EDA with charts; feature engineering; literature review and APA reference formatting & 50\% \\
-Nguyễn Thị Lam Giang & Model selection \& building; training \& hyperparameter tuning; evaluation metrics \& result charts; PowerPoint presentation; LaTeX report \& conclusion & 50\% \\
+Lam Nhat Huy\ & Data collection \& loading; data cleaning \& preprocessing; EDA with charts; feature engineering; literature review and APA reference formatting & 50\% \\
+Nguyen Thi Lam Giang & Model selection \& building; training \& hyperparameter tuning; evaluation metrics \& result charts; PowerPoint presentation; LaTeX report \& conclusion & 50\% \\
 \midrule
 \textbf{Total} & Both members: integration, testing, and peer review & \textbf{100\%} \\
 \bottomrule
