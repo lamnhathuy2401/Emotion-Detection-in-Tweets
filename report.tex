@@ -3,20 +3,18 @@
 % IMPORTANT: Compile with XeLaTeX (Overleaf: Menu > Compiler > XeLaTeX)
 \documentclass[12pt]{article}
 
-% ==========================================
-% KHAI BÁO GÓI LỆNH (PREAMBLE)
-% ==========================================
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
-\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry} % Cân đối lại lề theo chuẩn bìa đóng gáy
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
 \usepackage{float}
 \usepackage{hyperref}
 \usepackage{setspace}
 \onehalfspacing
 
-% Các gói lệnh bổ sung cho trang bìa mới
 \usepackage{tikz}
 \usetikzlibrary{calc}
 
@@ -26,21 +24,16 @@
 
 \begin{document}
 
-% ==========================================
-% TRANG BÌA MỚI (ĐÃ TÍNH TOÁN CÂN XỨNG LỀ CHUẨN)
-% ==========================================
+% ---------------- TITLE PAGE ----------------
 \begin{titlepage}
-\thispagestyle{empty} % Không hiển thị số trang ở trang bìa
+\thispagestyle{empty}
 
-% --- KHUNG VIỀN KÉP TIKZ (CHỐNG CHỒNG VIỀN, LỀ TRÁI ĐÓNG GÁY) ---
+% Double border (left margin wider for binding)
 \begin{tikzpicture}[remember picture,overlay]
-    % Khung ngoài (Nét đậm 1.5pt): Cách mép giấy trên/dưới/phải 1.5cm, lề trái 2.0cm
     \draw[line width=1.5pt]
         ($(current page.north west)+(2.0cm,-1.5cm)$)
         rectangle
         ($(current page.south east)+(-1.5cm,1.5cm)$);
-    
-    % Khung trong (Nét mảnh 0.6pt): Cách đều khung ngoài đúng 0.2cm (2mm)
     \draw[line width=0.6pt]
         ($(current page.north west)+(2.2cm,-1.7cm)$)
         rectangle
@@ -49,58 +42,48 @@
 
 \begin{center}
     \vspace*{0.2cm}
-    
-    % 1. TÊN TRƯỜNG & KHOA
+
     {\huge \textbf{DUY TAN UNIVERSITY}} \\[0.25cm]
     {\LARGE \textbf{Faculty of Computer Science}}
-    
+
     \vspace{0.7cm}
-    
-    % 2. LOGO TRƯỜNG Ở GIỮA
-    % (Đảm bảo file Picture1.png có sẵn trong thư mục trên Overleaf)
+
     \includegraphics[width=7.0cm]{LOGO.JPG} \\[1.5cm]
-    
-    % 3. THÔNG TIN MÔN HỌC, LỚP, GIẢNG VIÊN & NĂM HỌC
+
     {\large \textbf{Course:} Machine Learning with Large Datasets} \\[0.3cm]
     {\large \textbf{Class:} DS 423 SA1} \\[0.3cm]
     {\large \textbf{Lecturers:} Puri Vikram, Trần Quốc Đạt} \\[0.3cm]
     {\large \textbf{Academic Year:} 2025--2026}
-    
+
     \vspace{1.0cm}
-    
-    % --- TÊN ĐỀ TÀI & NHÓM ---
+
     \rule{0.9\textwidth}{1.8pt} \\[0.4cm]
     {\huge \textbf{Emotion Detection in Tweets}} \\[0.35cm]
     {\LARGE \textbf{Group 22 -- NLP}} \\[0.3cm]
     \rule{0.9\textwidth}{1.8pt}
-    
+
     \vspace{2.0cm}
-    
-    % --- BẢNG THÔNG TIN THÀNH VIÊN NHÓM ---
+
     {\large
     \renewcommand{\arraystretch}{1.3}
     \begin{tabular}{l l}
         \toprule
         \textbf{Member} & \textbf{Student ID} \\
         \midrule
-        Lam Nhat Huy & 29211465364 \\
-        Nguyen Thi Lam Giang & 29201458314 \\
+        Lâm Nhật Huy & 29211465364 \\
+        Nguyễn Thị Lam Giang & 29201458314 \\
         \bottomrule
     \end{tabular}
     }
-    
-    \vfill % Đẩy tháng năm xuống sát viền dưới cùng
-    
-    % --- THỜI GIAN ---
+
+    \vfill
+
     {\large \textbf{June 2026}}
     \vspace*{0.2cm}
 \end{center}
 \end{titlepage}
 
-% ==========================================
-% NỘI DUNG BÁO CÁO
-% ==========================================
-
+% ---------------- CONTENTS ----------------
 \tableofcontents
 \newpage
 
@@ -410,9 +393,9 @@ Most errors stem from semantic overlap between classes, mixed emotions within a 
 \caption{Representative misclassification examples}
 \label{tab:errors}
 \small
-\begin{tabular}{p{1.6cm}p{1.8cm}p{5.8cm}p{3.2cm}}
+\begin{tabularx}{\textwidth}{@{}p{1.6cm}p{1.7cm}>{\raggedright\arraybackslash}p{5.0cm}>{\raggedright\arraybackslash}X@{}}
 \toprule
-\textbf{Label} & \textbf{Predicted} & \textbf{Example (abridged)} & \textbf{Possible Reason} \\
+\textbf{True Label} & \textbf{Predicted} & \textbf{Example (abridged)} & \textbf{Possible Reason} \\
 \midrule
 Joy & Love & ``I feel like I am in paradise kissing those sweet lips\ldots'' & Affectionate vocabulary overlaps with \textit{love}. \\
 Love & Joy & ``I'm feeling generous today here's one more\ldots'' & Positive, light-hearted tone resembles \textit{joy}. \\
@@ -421,7 +404,7 @@ Fear & Joy & ``I was feeling pretty anxious all day but my first day at work was
 Surprise & Fear & ``I was so uncomfortable and feeling weird feelings but wasn't sure if they were contractions\ldots'' & Uncertainty and discomfort resemble \textit{fear}. \\
 Anger & Fear & ``I feel my heart is tortured by what I have done'' & Intense negative emotion; vocabulary is ambiguous between anger and fear. \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 These cases illustrate that fine-grained emotion boundaries are inherently fuzzy in short, context-poor social-media text---a key motivation for future context-aware models.
@@ -432,16 +415,23 @@ These cases illustrate that fine-grained emotion boundaries are inherently fuzzy
 \centering
 \caption{Individual contribution breakdown}
 \label{tab:contrib}
-\begin{tabular}{llc}
+\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xc@{}}
 \toprule
 \textbf{Member} & \textbf{Responsibilities} & \textbf{\%} \\
 \midrule
-Lam Nhat Huy\ & Data collection \& loading; data cleaning \& preprocessing; EDA with charts; feature engineering; literature review and APA reference formatting & 50\% \\
-Nguyen Thi Lam Giang & Model selection \& building; training \& hyperparameter tuning; evaluation metrics \& result charts; PowerPoint presentation; LaTeX report \& conclusion & 50\% \\
+Lâm Nhật Huy &
+Data collection \& loading; data cleaning \& preprocessing; EDA with charts; feature engineering; literature review and APA reference formatting &
+50\% \\
+Nguyễn Thị Lam Giang &
+Model selection \& building; training \& hyperparameter tuning; evaluation metrics \& result charts; PowerPoint presentation; LaTeX report \& conclusion &
+50\% \\
 \midrule
-\textbf{Total} & Both members: integration, testing, and peer review & \textbf{100\%} \\
+\textbf{Total} &
+Both members: integration, testing, and peer review &
+\textbf{100\%} \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \section{Conclusion and Future Work}
