@@ -1,258 +1,83 @@
-# 🐦 Emotion Detection in Tweets
+# Emotion Detection in Tweets
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1vPYqttNY-EvITddUZ_FBuzNg78t6m5YN?usp=sharing)
+**DS 423 — Machine Learning with Large Datasets**  
+**Group 22 — NLP** | Duy Tan University, Da Nang
 
-> A supervised machine learning pipeline powered by **scikit-learn** and **NLTK** — designed to classify fine-grained emotions from short, noisy social media text.
+| Member | Student ID | Role |
+|--------|------------|------|
+| Lâm Nhật Huy | 29211465364 | Data & Analysis Lead |
+| Nguyễn Thị Lam Giang | 29201458314 | Modeling & Evaluation Lead |
 
----
+**Repository:** https://github.com/lamnhathuy2401/Emotion-Detection-in-Tweets
 
-## 📋 Table of Contents
+## Problem
 
-- [Overview](#overview)
-- [Features](#features)
-- [System Architecture](#system-architecture)
-- [Flowchart](#flowchart)
-- [Project Structure](#project-structure)
-- [Pipeline Explained](#pipeline-explained)
-- [Tech Stack](#tech-stack)
-- [Dataset](#dataset)
-- [Results & Evaluation](#results--evaluation)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Future Work](#future-work)
-- [Credits](#credits)
+Brands and researchers need to automatically detect emotions (joy, anger, sadness, fear, love, surprise) from short social-media text.
+This project builds a **multi-class text classifier** that labels the emotion of each tweet.
+The implementation is an offline notebook-based pipeline (not a deployed real-time system).
 
----
+## Dataset
 
-## 🔍 Overview
+[Emotion Dataset (dair-ai)](https://huggingface.co/datasets/dair-ai/emotion) on Hugging Face.
 
-**Emotion Detection in Tweets** is an AI-powered text classification system that processes informal, short-form social media text to detect underlying human emotions. Moving beyond standard binary positive/negative sentiment analysis, this project categorizes tweets into six distinct fine-grained emotions:
+| Split | Samples | Purpose |
+|-------|---------|---------|
+| Train | 16,000 | Training + cross-validation |
+| Validation | 2,000 | Development check |
+| Test | 2,000 | Final evaluation |
 
-- **Joy** 
-- **Sadness**
-- **Anger**
-- **Fear**
-- **Love**
-- **Surprise**
+**6 classes:** sadness, joy, love, anger, fear, surprise (class-imbalanced; joy ≈ 33.5%, surprise ≈ 3.6%).
 
-The system utilizes a deliberate, supervised machine learning architecture to strip away social media noise, translate words into mathematical features via TF-IDF, and classify the text using a highly-tuned Logistic Regression engine.
+## Project Structure
 
----
-
-## ✨ Features
-
-| Feature | Description |
-|---|---|
-| ☁️ **Cloud-Ready** | Instantly runnable via Google Colab with no local setup required. |
-| 🧹 **Robust Preprocessing** | Strips URLs, mentions, and non-alphabetic noise while preserving hashtag keywords. |
-| 🔤 **Lexical Normalization** | Uses NLTK for stopword removal and lemmatization to standardize vocabulary. |
-| 🧮 **TF-IDF Vectorization** | Translates textual data into a sparse $16,000 \times 10,000$ matrix using unigrams and bigrams. |
-| 🤖 **Machine Learning Backend** | Tuned Logistic Regression model utilizing balanced class weighting to handle minority classes (e.g., Surprise). |
-| 📊 **Extensive Evaluation** | In-depth performance metrics tracking including Accuracy, Precision, Recall, F1-score, and Confusion Matrices. |
-
----
-
-## 🏗️ System Architecture
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│                     EMOTION DETECTION PIPELINE                      │
-└─────────────────────────────────┬───────────────────────────────────┘
-                                  │
-         ┌────────────────────────▼──────────────────────────┐
-         │                   INPUT LAYER                     │
-         │   🐦 Raw Tweets (Hugging Face dair-ai Dataset)    │
-         └────────────────────────┬──────────────────────────┘
-                                  │
-         ┌────────────────────────▼──────────────────────────┐
-         │               PREPROCESSING LAYER                 │
-         │   • Lowercasing & URL/Mention Removal             │
-         │   • Non-alphabetic character stripping            │
-         │   • NLTK Stopword Removal & Lemmatization         │
-         └────────────────────────┬──────────────────────────┘
-                                  │
-         ┌────────────────────────▼──────────────────────────┐
-         │               FEATURE ENGINEERING                 │
-         │   • TF-IDF Vectorization (scikit-learn)           │
-         │   • Max Features: 10,000 | N-grams: (1, 2)        │
-         └────────────────────────┬──────────────────────────┘
-                                  │
-         ┌────────────────────────▼──────────────────────────┐
-         │               CLASSIFICATION LAYER                │
-         │   • Multi-class Logistic Regression               │
-         │   • Tuned Hyperparameters: C=5.0, balanced        │
-         └────────────────────────┬──────────────────────────┘
-                                  │
-         ┌────────────────────────▼──────────────────────────┐
-         │                   OUTPUT LAYER                    │
-         │   📊 6 Emotion Classes:                           │
-         │   Joy | Sadness | Anger | Fear | Love | Surprise  │
-         └───────────────────────────────────────────────────┘
+```
+Emotion-Detection-in-Tweets/
+├── emotion_detection.ipynb   # Full runnable notebook (EDA → train → evaluate)
+├── requirements.txt
+├── README.md
+├── report.tex                # LaTeX report (compile with XeLaTeX)
+├── report.pdf                # Compiled report
+├── Emotion Detection.pptx    # Presentation slides
+└── outputs/                  # Figures and metrics from the notebook
+    ├── eda_overview.png
+    ├── confusion_matrix.png
+    ├── f1_per_class.png
+    ├── classification_report.txt
+    └── model_comparison.csv
 ```
 
----
-
-## 🔄 Flowchart
-
-### Data Preprocessing Flow
-
-```text
-                    ┌─────────────────────┐
-                    │ RAW SOCIAL MEDIA    │
-                    │ @user I am feeling  │
-                    │ SO #excited today!  │
-                    └──────────┬──────────┘
-                               │
-                    ┌──────────▼──────────┐
-                    │ NORMALIZE & STRIP   │
-                    │ Remove URLs, @ tags │
-                    │ and lowercasing     │
-                    └──────────┬──────────┘
-                               │
-                    ┌──────────▼──────────┐
-                    │       FILTER        │
-                    │ Remove punctuation  │
-                    │ and stopwords       │
-                    └──────────┬──────────┘
-                               │
-                    ┌──────────▼──────────┐
-                    │    LEMMATIZATION    │
-                    │ ['feel', 'excit',   │
-                    │  'today']           │
-                    └─────────────────────┘
-```
-
----
-
-## 📁 Project Structure
-
-```text
-doan/
-│
-├── emotion_detection.ipynb        # Main notebook (Pipeline & Training)
-├── requirements.txt               # Python dependencies
-├── README.md                      # Project documentation
-│
-├── outputs/                       # Saved figures and reports
-│
-└── report.tex                     # LaTeX source for the project report
-```
-
----
-
-## 🧩 Pipeline Explained
-
-### 1. Text Preprocessing
-Social media text is notoriously noisy. The preprocessing module strips out non-informative elements (URLs, mentions, punctuation) while keeping informative features like hashtag keywords. Text is then lemmatized using **NLTK** to reduce inflected forms to their common base, shrinking the overall vocabulary.
-
-### 2. Feature Engineering (TF-IDF)
-Cleaned text is mapped into mathematical space using Term Frequency-Inverse Document Frequency. 
-- **Max features:** 10,000 
-- **N-gram range:** Unigrams and Bigrams (1, 2)
-- **Min_df:** 2 (ignores extremely rare terms)
-
-### 3. Model Selection & Tuning
-Several baselines (Naive Bayes, Linear SVM) were tested. **Logistic Regression** was chosen for its optimal balance of speed, interpretability, and performance on high-dimensional sparse data. It was tuned via 3-fold stratified cross-validation (`GridSearchCV`) with a regularization strength of `C=5.0` and balanced class weights to penalize errors on minority classes.
-
----
-
-## 🛠️ Tech Stack
-
-| Library | Purpose |
-|---|---|
-| **scikit-learn** | TF-IDF Vectorization, Logistic Regression, GridSearchCV, Metrics |
-| **NLTK** | Stopword removal, tokenization, and lemmatization |
-| **Hugging Face Datasets** | Loading the `dair-ai` emotion dataset |
-| **Pandas / NumPy** | Data manipulation and numerical operations |
-| **Matplotlib / Seaborn** | Exploratory Data Analysis (EDA) and Result Visualizations |
-
----
-
-## 📊 Dataset
-
-The project utilizes the **Emotion Dataset (`dair-ai`)** hosted on Hugging Face.
-- **Total Tweets:** 20,000
-- **Train:** 16,000 (80%)
-- **Validation:** 2,000 (10%)
-- **Test:** 2,000 (10%)
-
-*Note: The dataset exhibits natural class imbalance, with Joy (33.5%) and Sadness (29.2%) dominating, and Surprise (3.6%) as the distinct minority class.*
-
----
-
-## 🏆 Results & Evaluation
-
-The tuned Logistic Regression engine successfully captured the emotional signals, significantly outperforming the baseline approaches on the strictly held-out test set.
-
-| Metric | Score |
-|---|---|
-| **Accuracy** | **90.25%** |
-| **Weighted Precision** | 0.9091 |
-| **Weighted Recall** | 0.9025 |
-| **Weighted F1-Score** | **0.9043** |
-
-*The model demonstrated a massive +55.5% accuracy improvement over a simple majority-class baseline.*
-
----
-
-## ⚙️ Installation
-
-*(Not required if using Google Colab)*
-
-### Prerequisites
-- Python 3.8 or higher
-- Jupyter Notebook / JupyterLab
-
-### Setup
+## Setup
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/lamnhathuy2401/Emotion-Detection-in-Tweets.git
-cd Emotion-Detection-in-Tweets
-
-# 2. Create a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts ctivate
-
-# 3. Install dependencies
 pip install -r requirements.txt
+python -m nltk.downloader stopwords wordnet omw-1.4
+jupyter notebook emotion_detection.ipynb
 ```
 
----
+## Approach
 
-## 🚀 Usage
+1. Load and explore the dataset (EDA)
+2. Clean and preprocess tweet text (URLs, mentions, stopwords, lemmatization)
+3. Vectorize with TF-IDF (unigrams + bigrams, max 10,000 features)
+4. Compare baselines: Majority Class, Multinomial Naive Bayes, Linear SVM
+5. Tune Logistic Regression with GridSearchCV (3-fold stratified CV)
+6. Evaluate on the held-out test set: Accuracy, Precision, Recall, F1-score, Confusion Matrix
 
-### ☁️ Option 1: Run in Google Colab (Recommended)
-You can run the entire pipeline directly in your browser without any local setup. Click the badge below to open the notebook:
+## Results (Test Set)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1vPYqttNY-EvITddUZ_FBuzNg78t6m5YN?usp=sharing)
+| Model | Accuracy | Weighted F1 |
+|-------|----------|-------------|
+| Majority Class (always joy) | 34.75% | 0.1792 |
+| TF-IDF + Multinomial Naive Bayes | 77.00% | 0.7345 |
+| TF-IDF + Linear SVM | 90.05% | 0.9019 |
+| **TF-IDF + Logistic Regression (tuned)** | **90.25%** | **0.9043** |
 
-### 💻 Option 2: Run Locally
-To run the pipeline and replicate the results on your machine:
+Best hyperparameters: `C=5.0`, `class_weight=balanced` (CV weighted F1 = 0.9009).
 
-1. Launch Jupyter Notebook in the project directory:
-   ```bash
-   jupyter notebook
-   ```
-2. Open `emotion_detection.ipynb`.
-3. Run the cells sequentially to load the dataset, execute preprocessing, train the Logistic Regression model, and generate the evaluation metrics and confusion matrices.
+Charts and detailed metrics are saved under `outputs/`.
 
----
+## Submission
 
-## 🔮 Future Work
-
-- **Context-Aware Transformers:** Implement models like DistilBERT to capture semantics and accurately process negation (e.g., distinguishing "not happy").
-- **Minority Class Augmentation:** Use data augmentation techniques to bolster underrepresented emotions like Surprise.
-- **API Deployment:** Transition from an offline Jupyter notebook into a real-time REST API for live dashboard integration.
-
----
-
-## 🤝 Credits
-
-**Group 22 - NLP | Duy Tan University**
-- Lam Nhat Huy (29211465364)
-- Nguyen Thi Lam Giang (29201458314)
-
----
-
-<p align="center">Built with 🐦 Hugging Face · 🧠 scikit-learn · 📚 NLTK</p>
+- **Code:** `emotion_detection.ipynb` + `requirements.txt` + this README
+- **Report:** `report.tex` and `report.pdf` (XeLaTeX)
+- **Presentation:** `Emotion Detection.pptx` (problem, solution, results, contribution, APA references)
