@@ -10,6 +10,8 @@
 
 **Repository:** https://github.com/lamnhathuy2401/Emotion-Detection-in-Tweets
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1vPYqttNY-EvITddUZ_FBuzNg78t6m5YN?usp=sharing)
+
 ## Problem
 
 Brands and researchers need to automatically detect emotions (joy, anger, sadness, fear, love, surprise) from short social-media text.
@@ -47,6 +49,14 @@ Emotion-Detection-in-Tweets/
 ```
 
 ## Setup
+
+### Option 1: Run in Google Colab (Recommended)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1vPYqttNY-EvITddUZ_FBuzNg78t6m5YN?usp=sharing)
+
+Open the notebook directly in Colab — no local install required.
+
+### Option 2: Run locally
 
 ```bash
 pip install -r requirements.txt
